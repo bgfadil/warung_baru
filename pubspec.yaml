@@ -1,0 +1,33 @@
+name: warungku
+description: Aplikasi Kasir dan Manajemen Gudang WarungKU.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.1
+  path_provider: ^2.1.2
+  barcode_scan2: ^4.3.0
+  intl: ^0.20.3
+  image_picker: ^1.2.3
+  # KITA UPGRADE JUGA IMAGE CROPPER BIAR AKUR SAMA SHARE_PLUS:
+  image_cropper: ^12.2.1 
+  qr_flutter: ^4.1.0
+  share_plus: ^13.2.1
+  mobile_scanner: ^7.4.0
+  url_launcher: ^6.3.2
+  sqflite: ^2.4.3
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
