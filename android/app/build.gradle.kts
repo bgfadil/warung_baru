@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.warung_baru"
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = 36 // INI JUGA 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
