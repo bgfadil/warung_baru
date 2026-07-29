@@ -1,11 +1,8 @@
-//... bagian atas sama kayak kemarin, gw tulis full biar gak salah timpa
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'database_helper.dart';
 
@@ -27,9 +24,7 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
   void initState() {
     super.initState();
     _refreshData();
-    _searchController.addListener(() {
-      setState(() {});
-    }); // biar icon X search muncul realtime
+    _searchController.addListener(() => setState(() {}));
   }
 
   @override
@@ -75,11 +70,10 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
 
   void _toggleSelection(int id) {
     setState(() {
-      if (_selectedBarang.contains(id)) {
+      if (_selectedBarang.contains(id))
         _selectedBarang.remove(id);
-      } else {
+      else
         _selectedBarang.add(id);
-      }
     });
   }
 
@@ -92,23 +86,24 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
 
   Future<void> _hapusSelectedBarang() async {
     if (_selectedBarang.isEmpty) return;
-    final confirmed = await showDialog<bool>(
+    final ok = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (c) => AlertDialog(
               title: const Text('Hapus Banyak Barang'),
               content: Text('Hapus ${_selectedBarang.length} barang terpilih?'),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () => Navigator.pop(c, false),
                     child: const Text('Batal')),
                 ElevatedButton(
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Hapus'))
+                    onPressed: () => Navigator.pop(c, true),
+                    child: const Text('Hapus',
+                        style: TextStyle(color: Colors.white)))
               ],
             ));
-    if (confirmed != true) return;
+    if (ok != true) return;
     for (final id in _selectedBarang.toList()) {
       await DatabaseHelper.instance.hapusBarang(id);
     }
@@ -117,9 +112,87 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
     _refreshData();
   }
 
-  String _formatRupiah(num value) =>
+  String _formatRupiah(num v) =>
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-          .format(value);
+          .format(v);
+
+  Widget _detailRow(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(
+            width: 100,
+            child: Text('$label',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 13))),
+        const Text(': '),
+        Expanded(
+            child:
+                Text('${value ?? '-'}', style: const TextStyle(fontSize: 13))),
+      ]),
+    );
+  }
+
+  // INI YANG KEMARIN HILANG BOS - DETAIL LENGKAP 8 KOLOM BALIK LAGI
+  void _tampilkanDetailProduk(Map<String, dynamic> item, List<dynamic> fotos) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(item['nama_barang'] ?? '-',
+            style: TextStyle(
+                color: Colors.blue[900], fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (fotos.isNotEmpty)
+                  SizedBox(
+                      height: 120,
+                      child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: fotos.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (c, i) {
+                            try {
+                              return ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(File(fotos[i]),
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover));
+                            } catch (e) {
+                              return const SizedBox();
+                            }
+                          })),
+                if (fotos.isNotEmpty) const SizedBox(height: 16),
+                _detailRow('Barcode', item['barcode']),
+                _detailRow('Kategori', item['kategori']),
+                _detailRow(
+                    'Harga Jual', _formatRupiah(item['harga_jual'] ?? 0)),
+                _detailRow(
+                    'Harga Modal', _formatRupiah(item['harga_modal'] ?? 0)),
+                _detailRow('Stok', item['stok']),
+                _detailRow('Produsen', item['produsen']),
+                _detailRow('Supplier', item['supplier']),
+                _detailRow('No Nota', item['no_nota']),
+                const Divider(height: 20),
+                const Text('Deskripsi:',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 4),
+                Text(item['deskripsi'] ?? '-',
+                    style: const TextStyle(fontSize: 13)),
+              ]),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Tutup'))
+        ],
+      ),
+    );
+  }
 
   Future<void> _scanDanTambahBarang() async {
     try {
@@ -169,107 +242,93 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
     List<String> fotoList = dataLama != null
         ? (jsonDecode(dataLama['foto_produk'] ?? '[]') as List).cast<String>()
         : [];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(dataLama == null ? 'Tambah Barang' : 'Edit Barang'),
-        content: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(
-                controller: barcodeCtrl,
-                decoration: const InputDecoration(labelText: 'Barcode')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: namaCtrl,
-                decoration: const InputDecoration(labelText: 'Nama Barang *')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: jualCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Harga Jual')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: modalCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Harga Modal')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: stokCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Stok')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: kategoriCtrl,
-                decoration: const InputDecoration(labelText: 'Kategori')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: produsenCtrl,
-                decoration: const InputDecoration(labelText: 'Produsen')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: supplierCtrl,
-                decoration: const InputDecoration(labelText: 'Supplier')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: noNotaCtrl,
-                decoration: const InputDecoration(labelText: 'No Nota')),
-            const SizedBox(height: 8),
-            TextField(
-                controller: deskripsiCtrl,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Deskripsi')),
-          ]),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-              onPressed: () async {
-                final data = {
-                  'barcode': barcodeCtrl.text,
-                  'nama_barang': namaCtrl.text,
-                  'harga_jual': int.tryParse(
-                          jualCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
-                      0,
-                  'harga_modal': int.tryParse(
-                          modalCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
-                      0,
-                  'stok': int.tryParse(stokCtrl.text) ?? 0,
-                  'deskripsi': deskripsiCtrl.text,
-                  'kategori': kategoriCtrl.text,
-                  'produsen': produsenCtrl.text,
-                  'supplier': supplierCtrl.text,
-                  'no_nota': noNotaCtrl.text,
-                  'foto_produk': jsonEncode(fotoList)
-                };
-                if (dataLama == null) {
-                  await DatabaseHelper.instance.tambahBarang(data);
-                } else {
-                  await DatabaseHelper.instance
-                      .updateBarang(dataLama['id'], data);
-                }
-                if (!mounted) return;
-                Navigator.pop(ctx);
-                _refreshData();
-              },
-              child: const Text('Simpan'))
-        ],
-      ),
-    );
-  }
-
-  void _tampilkanDetailProduk(Map<String, dynamic> item, List<dynamic> fotos) {
     showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-                title: Text(item['nama_barang'] ?? '-'),
-                content: Text(_formatRupiah(item['harga_jual'] ?? 0)),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Tutup'))
-                ]));
+              title: Text(dataLama == null ? 'Tambah Barang' : 'Edit Barang'),
+              content: SingleChildScrollView(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                TextField(
+                    controller: barcodeCtrl,
+                    decoration: const InputDecoration(labelText: 'Barcode')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: namaCtrl,
+                    decoration:
+                        const InputDecoration(labelText: 'Nama Barang *')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: jualCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Harga Jual')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: modalCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        const InputDecoration(labelText: 'Harga Modal')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: stokCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Stok')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: kategoriCtrl,
+                    decoration: const InputDecoration(labelText: 'Kategori')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: produsenCtrl,
+                    decoration: const InputDecoration(labelText: 'Produsen')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: supplierCtrl,
+                    decoration: const InputDecoration(labelText: 'Supplier')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: noNotaCtrl,
+                    decoration: const InputDecoration(labelText: 'No Nota')),
+                const SizedBox(height: 8),
+                TextField(
+                    controller: deskripsiCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(labelText: 'Deskripsi')),
+              ])),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Batal')),
+                ElevatedButton(
+                    onPressed: () async {
+                      final data = {
+                        'barcode': barcodeCtrl.text,
+                        'nama_barang': namaCtrl.text,
+                        'harga_jual': int.tryParse(jualCtrl.text
+                                .replaceAll(RegExp(r'[^0-9]'), '')) ??
+                            0,
+                        'harga_modal': int.tryParse(modalCtrl.text
+                                .replaceAll(RegExp(r'[^0-9]'), '')) ??
+                            0,
+                        'stok': int.tryParse(stokCtrl.text) ?? 0,
+                        'deskripsi': deskripsiCtrl.text,
+                        'kategori': kategoriCtrl.text,
+                        'produsen': produsenCtrl.text,
+                        'supplier': supplierCtrl.text,
+                        'no_nota': noNotaCtrl.text,
+                        'foto_produk': jsonEncode(fotoList)
+                      };
+                      if (dataLama == null)
+                        await DatabaseHelper.instance.tambahBarang(data);
+                      else
+                        await DatabaseHelper.instance
+                            .updateBarang(dataLama['id'], data);
+                      if (!mounted) return;
+                      Navigator.pop(ctx);
+                      _refreshData();
+                    },
+                    child: const Text('Simpan'))
+              ],
+            ));
   }
 
   @override
@@ -290,7 +349,6 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                 decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'Cari nama/kategori/barcode',
-                    // INI REQUEST 1: Tanda silang reset pencarian
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -305,6 +363,7 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                         ? 'Gudang Kosong'
                         : 'Barang tidak ditemukan'))
                 : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 100),
                     itemCount: _barangFiltered.length,
                     itemBuilder: (context, i) {
                       final item = _barangFiltered[i];
@@ -396,7 +455,6 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                                       color:
                                                           Colors.orange[800]))),
                                           const SizedBox(height: 8),
-                                          // INI REQUEST 4: Tong sampah satuan dibawah pencil - sekarang muncul terus kecuali item lagi kepilih
                                           if (!isSelected)
                                             InkWell(
                                                 onTap: () async {
@@ -463,25 +521,25 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       ]);
                     }))
       ]),
-      // INI REQUEST 2 & 3: Tombol bawah
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: widget.role == 'BOS' && _selectedBarang.isNotEmpty
           ? Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 8),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                // Tombol X jadi biru kayak bingkai, X putih
-                FloatingActionButton(
-                    onPressed: _clearSelection,
-                    backgroundColor: Colors.blue[800],
-                    child: const Icon(Icons.close, color: Colors.white)),
-                const SizedBox(width: 12),
-                // Tombol Hapus icon + tulisan putih
-                FloatingActionButton.extended(
-                    onPressed: _hapusSelectedBarang,
-                    icon: const Icon(Icons.delete_forever, color: Colors.white),
-                    label: const Text('Hapus',
-                        style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.red[700])
-              ]))
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FloatingActionButton(
+                        onPressed: _clearSelection,
+                        backgroundColor: Colors.blue[800],
+                        child: const Icon(Icons.close, color: Colors.white)),
+                    FloatingActionButton.extended(
+                        onPressed: _hapusSelectedBarang,
+                        icon: const Icon(Icons.delete_forever,
+                            color: Colors.white),
+                        label: const Text('Hapus',
+                            style: TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.red[700]),
+                  ]))
           : FloatingActionButton.extended(
               onPressed: _scanDanTambahBarang,
               icon: const Icon(Icons.camera_alt),
