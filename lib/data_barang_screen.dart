@@ -1,3 +1,5 @@
+//... bagian atas sama kayak kemarin, gw tulis full biar gak salah timpa
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
@@ -25,6 +27,9 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
   void initState() {
     super.initState();
     _refreshData();
+    _searchController.addListener(() {
+      setState(() {});
+    }); // biar icon X search muncul realtime
   }
 
   @override
@@ -137,7 +142,6 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
     }
   }
 
-  // INI YANG SOLID 8 KOLOM BOS - JANGAN DIHAPUS LAGI
   void _tampilkanForm(
       {required String barcode, Map<String, dynamic>? dataLama}) {
     final namaCtrl =
@@ -286,6 +290,12 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                 decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search),
                     hintText: 'Cari nama/kategori/barcode',
+                    // INI REQUEST 1: Tanda silang reset pencarian
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: _clearSearch)
+                        : null,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12))))),
         Expanded(
@@ -386,7 +396,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                                       color:
                                                           Colors.orange[800]))),
                                           const SizedBox(height: 8),
-                                          if (_selectedBarang.isEmpty)
+                                          // INI REQUEST 4: Tong sampah satuan dibawah pencil - sekarang muncul terus kecuali item lagi kepilih
+                                          if (!isSelected)
                                             InkWell(
                                                 onTap: () async {
                                                   final c = await showDialog<
@@ -452,21 +463,23 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       ]);
                     }))
       ]),
+      // INI REQUEST 2 & 3: Tombol bawah
       floatingActionButton: widget.role == 'BOS' && _selectedBarang.isNotEmpty
           ? Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 8),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
+                // Tombol X jadi biru kayak bingkai, X putih
                 FloatingActionButton(
                     onPressed: _clearSelection,
-                    backgroundColor: Colors.grey[400],
-                    child: const Icon(Icons.close, color: Colors.blueAccent)),
+                    backgroundColor: Colors.blue[800],
+                    child: const Icon(Icons.close, color: Colors.white)),
                 const SizedBox(width: 12),
+                // Tombol Hapus icon + tulisan putih
                 FloatingActionButton.extended(
                     onPressed: _hapusSelectedBarang,
-                    icon: const Icon(Icons.delete_forever,
-                        color: Colors.blueAccent),
+                    icon: const Icon(Icons.delete_forever, color: Colors.white),
                     label: const Text('Hapus',
-                        style: TextStyle(color: Colors.blueAccent)),
+                        style: TextStyle(color: Colors.white)),
                     backgroundColor: Colors.red[700])
               ]))
           : FloatingActionButton.extended(
