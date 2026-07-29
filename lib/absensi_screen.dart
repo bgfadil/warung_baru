@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -9,8 +8,7 @@ class AbsensiScreen extends StatefulWidget {
   final String namaKaryawan;
 
   const AbsensiScreen(
-      {Key? key, required this.idKaryawan, required this.namaKaryawan})
-      : super(key: key);
+      {super.key, required this.idKaryawan, required this.namaKaryawan});
 
   @override
   _AbsensiScreenState createState() => _AbsensiScreenState();
@@ -57,7 +55,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
       });
       await DatabaseHelper.instance.catatLog(
           widget.namaKaryawan, 'Melakukan Absen MASUK pada $jamSekarang');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Absen Masuk Berhasil! Selamat Bekerja!'),
           backgroundColor: Colors.green));
     } else {
@@ -67,7 +65,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
       });
       await DatabaseHelper.instance.catatLog(
           widget.namaKaryawan, 'Melakukan Absen PULANG pada $jamSekarang');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Absen Pulang Berhasil! Hati-hati di jalan!'),
           backgroundColor: Colors.orange));
     }
@@ -77,8 +75,9 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading)
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     bool sudahMasuk = dataAbsenHariIni != null;
     bool sudahPulang = sudahMasuk && dataAbsenHariIni!['jam_pulang'] != null;
@@ -86,7 +85,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Mesin Absensi',
+        title: const Text('Mesin Absensi',
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
@@ -98,26 +97,26 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.camera_front, size: 80, color: Colors.blue[800]),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text('Halo, ${widget.namaKaryawan}!',
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.blue[900])),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
                   DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
                       .format(DateTime.now()),
                   style: TextStyle(fontSize: 16, color: Colors.grey[600])),
 
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
 
               // LOGIKA STATUS TAMPILAN TOMBOL ABSEN
               if (!sudahMasuk) ...[
-                Text('Anda belum absen masuk hari ini.',
+                const Text('Anda belum absen masuk hari ini.',
                     style: TextStyle(
                         color: Colors.red, fontWeight: FontWeight.bold)),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -125,8 +124,8 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white),
-                    icon: Icon(Icons.login),
-                    label: Text('Jepret Selfie Absen MASUK',
+                    icon: const Icon(Icons.login),
+                    label: const Text('Jepret Selfie Absen MASUK',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     onPressed: () => _prosesAbsen('MASUK'),
@@ -134,7 +133,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                 )
               ] else if (sudahMasuk && !sudahPulang) ...[
                 Container(
-                  padding: EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
                       color: Colors.green[50],
                       borderRadius: BorderRadius.circular(10),
@@ -145,13 +144,13 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                           style: TextStyle(
                               color: Colors.green[800],
                               fontWeight: FontWeight.bold)),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                       Text('Jam Masuk: ${dataAbsenHariIni!['jam_masuk']}',
-                          style: TextStyle(fontSize: 16)),
+                          style: const TextStyle(fontSize: 16)),
                     ],
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -159,8 +158,8 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange[800],
                         foregroundColor: Colors.white),
-                    icon: Icon(Icons.logout),
-                    label: Text('Jepret Selfie Absen PULANG',
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Jepret Selfie Absen PULANG',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     onPressed: () => _prosesAbsen('PULANG'),
@@ -168,7 +167,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                 )
               ] else ...[
                 Container(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                       color: Colors.blue[50],
                       borderRadius: BorderRadius.circular(10),
@@ -176,13 +175,13 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                   child: Column(
                     children: [
                       Icon(Icons.verified, color: Colors.blue[800], size: 50),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text('Absensi Selesai!',
                           style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: Colors.blue[900])),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
                           'Masuk: ${dataAbsenHariIni!['jam_masuk']} | Pulang: ${dataAbsenHariIni!['jam_pulang']}'),
                     ],

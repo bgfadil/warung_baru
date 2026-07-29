@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'database_helper.dart';
 
 class PengawasanScreen extends StatefulWidget {
+  const PengawasanScreen({super.key});
+
   @override
   _PengawasanScreenState createState() => _PengawasanScreenState();
 }
@@ -34,7 +36,7 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
   // Jendela Pop-up untuk intip foto selfie karyawan
   void _lihatFotoSelfie(String tipe, String? path, String nama) {
     if (path == null || path.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Waduh, fotonya tidak ditemukan!'),
           backgroundColor: Colors.red));
       return;
@@ -60,22 +62,23 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                         backgroundColor: Colors.blue[800],
                         foregroundColor: Colors.white),
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Tutup'))
+                    child: const Text('Tutup'))
               ],
             ));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading)
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
-          title: Text('Ruang Pengawasan',
+          title: const Text('Ruang Pengawasan',
               style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.indigo[800],
           foregroundColor: Colors.white,
@@ -84,7 +87,7 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
             unselectedLabelColor: Colors.indigo[200],
             indicatorColor: Colors.orange,
             indicatorWeight: 4,
-            tabs: [
+            tabs: const [
               Tab(icon: Icon(Icons.camera_front), text: 'Absensi Hari Ini'),
               Tab(icon: Icon(Icons.security), text: 'CCTV Digital'),
             ],
@@ -96,17 +99,17 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
             // TAB 1: ABSENSI HARI INI
             // ==========================================
             _listAbsen.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text('Belum ada karyawan yang absen hari ini.',
                         style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     itemCount: _listAbsen.length,
                     itemBuilder: (context, index) {
                       final absen = _listAbsen[index];
                       return Card(
                         elevation: 2,
-                        margin: EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15)),
                         child: Padding(
@@ -117,15 +120,15 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                               Row(
                                 children: [
                                   Icon(Icons.person, color: Colors.indigo[800]),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(absen['nama'],
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black87)),
                                 ],
                               ),
-                              Divider(),
+                              const Divider(),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceAround,
@@ -138,19 +141,19 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                                               color: Colors.grey[600],
                                               fontSize: 12)),
                                       Text(absen['jam_masuk'] ?? '-',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.green)),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton.icon(
                                           onPressed: () => _lihatFotoSelfie(
                                               'Masuk',
                                               absen['foto_masuk'],
                                               absen['nama']),
-                                          icon:
-                                              Icon(Icons.visibility, size: 16),
-                                          label: Text('Lihat',
+                                          icon: const Icon(Icons.visibility,
+                                              size: 16),
+                                          label: const Text('Lihat',
                                               style: TextStyle(fontSize: 12)),
                                           style: OutlinedButton.styleFrom(
                                               foregroundColor: Colors.green))
@@ -174,7 +177,7 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                                               color: absen['jam_pulang'] != null
                                                   ? Colors.orange
                                                   : Colors.grey)),
-                                      SizedBox(height: 5),
+                                      const SizedBox(height: 5),
                                       OutlinedButton.icon(
                                           onPressed: absen['jam_pulang'] != null
                                               ? () => _lihatFotoSelfie(
@@ -182,9 +185,9 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                                                   absen['foto_pulang'],
                                                   absen['nama'])
                                               : null,
-                                          icon:
-                                              Icon(Icons.visibility, size: 16),
-                                          label: Text('Lihat',
+                                          icon: const Icon(Icons.visibility,
+                                              size: 16),
+                                          label: const Text('Lihat',
                                               style: TextStyle(fontSize: 12)),
                                           style: OutlinedButton.styleFrom(
                                               foregroundColor: Colors.orange))
@@ -203,17 +206,17 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
             // TAB 2: CCTV DIGITAL (LOG AKTIVITAS)
             // ==========================================
             _listLog.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text('CCTV belum merekam aktivitas apapun.',
                         style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     itemCount: _listLog.length,
                     itemBuilder: (context, index) {
                       final log = _listLog[index];
                       return Card(
                         elevation: 1,
-                        margin: EdgeInsets.only(bottom: 8),
+                        margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.indigo[50],
@@ -221,7 +224,7 @@ class _PengawasanScreenState extends State<PengawasanScreen> {
                                 color: Colors.indigo[800]),
                           ),
                           title: Text(log['aktivitas'],
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
                           subtitle: Text('Oleh: ${log['nama_karyawan']}',
                               style: TextStyle(

@@ -12,11 +12,10 @@ class DashboardScreen extends StatelessWidget {
   final String role;
 
   const DashboardScreen(
-      {Key? key,
+      {super.key,
       required this.idKaryawan,
       required this.nama,
-      required this.role})
-      : super(key: key);
+      required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +23,12 @@ class DashboardScreen extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text('WaroengKU - $role',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () {
               Navigator.pushReplacement(context,
                   MaterialPageRoute(builder: (context) => LoginScreen()));
@@ -47,13 +46,13 @@ class DashboardScreen extends StatelessWidget {
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: Colors.blue[900])),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text('Jangan lupa Absen Masuk sebelum bekerja!',
                 style: TextStyle(
                     fontSize: 16,
                     color: Colors.orange[800],
                     fontWeight: FontWeight.bold)),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
@@ -134,13 +133,11 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                  color: color.withOpacity(0.1), shape: BoxShape.circle),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Icon(icon, size: 45, color: color),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Text(title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
