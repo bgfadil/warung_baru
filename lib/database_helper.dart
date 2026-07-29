@@ -77,9 +77,10 @@ class DatabaseHelper {
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2)
+    if (oldVersion < 2) {
       await db.execute(
           'CREATE TABLE barang (id INTEGER PRIMARY KEY AUTOINCREMENT, barcode TEXT NOT NULL UNIQUE, nama_barang TEXT NOT NULL, harga_modal REAL NOT NULL, harga_jual REAL NOT NULL, stok INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
+    }
     if (oldVersion < 3) {
       await db
           .execute('ALTER TABLE barang ADD COLUMN deskripsi TEXT DEFAULT ""');
@@ -107,9 +108,10 @@ class DatabaseHelper {
       await db.execute(
           'CREATE TABLE lembur (id INTEGER PRIMARY KEY AUTOINCREMENT, id_karyawan INTEGER NOT NULL, tanggal TEXT NOT NULL, durasi_jam REAL DEFAULT 0.0, keterangan TEXT DEFAULT "", created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)');
     }
-    if (oldVersion < 5)
+    if (oldVersion < 5) {
       await db.execute(
           'ALTER TABLE karyawan ADD COLUMN hak_akses TEXT DEFAULT "[]"');
+    }
     if (oldVersion < 6) {
       await db.execute(
           'CREATE TABLE level_akses (id INTEGER PRIMARY KEY AUTOINCREMENT, nama_level TEXT NOT NULL UNIQUE, daftar_akses TEXT DEFAULT "[]")');
@@ -179,6 +181,8 @@ class DatabaseHelper {
   Future<int> updateBarang(int id, Map<String, dynamic> data) async =>
       await (await instance.database)
           .update('barang', data, where: 'id = ?', whereArgs: [id]);
+  Future<int> hapusBarang(int id) async => await (await instance.database)
+      .delete('barang', where: 'id = ?', whereArgs: [id]);
   Future<List<Map<String, dynamic>>> getSemuaBarang() async =>
       await (await instance.database)
           .query('barang', orderBy: 'nama_barang ASC');
