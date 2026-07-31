@@ -84,6 +84,7 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
       _selectedBarang.clear();
     });
   }
+
   Future<void> _hapusBarang(int id) async {
     await DatabaseHelper.instance.hapusBarang(id);
     if (!mounted) return;
@@ -143,60 +144,185 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
   void _tampilkanDetailProduk(Map<String, dynamic> item, List<dynamic> fotos) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(item['nama_barang'] ?? '-',
-            style: TextStyle(
-                color: Colors.blue[900], fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (fotos.isNotEmpty)
-                  SizedBox(
-                      height: 120,
-                      child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: fotos.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (c, i) {
-                            try {
-                              return ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(File(fotos[i]),
-                                      width: 120,
-                                      height: 120,
-                                      fit: BoxFit.cover));
-                            } catch (e) {
-                              return const SizedBox();
-                            }
-                          })),
-                if (fotos.isNotEmpty) const SizedBox(height: 16),
-                _detailRow('Barcode', item['barcode']),
-                _detailRow('Kategori', item['kategori']),
-                _detailRow(
-                    'Harga Jual', _formatRupiah(item['harga_jual'] ?? 0)),
-                _detailRow(
-                    'Harga Modal', _formatRupiah(item['harga_modal'] ?? 0)),
-                _detailRow('Stok', item['stok']),
-                _detailRow('Produsen', item['produsen']),
-                _detailRow('Supplier', item['supplier']),
-                _detailRow('No Nota', item['no_nota']),
-                const Divider(height: 20),
-                const Text('Deskripsi:',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(item['deskripsi'] ?? '-',
-                    style: const TextStyle(fontSize: 13)),
-              ]),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Tutup'))
-        ],
-      ),
+      builder: (ctx) {
+        final pageController = PageController();
+        var currentIndex = 0;
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(item['nama_barang'] ?? '-',
+                style: TextStyle(
+                    color: Colors.blue[900], fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (fotos.isNotEmpty)
+                      Column(children: [
+                        Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: PageView.builder(
+                            controller: pageController,
+                            itemCount: fotos.length,
+                            onPageChanged: (index) {
+                              setStateDialog(() {
+                                currentIndex = index;
+                              });
+                            },
+                            itemBuilder: (c, i) {
+                              try {
+                                return GestureDetector(
+                                  onTap: () => _showFullScreenImages(
+                                      fotos, currentIndex),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(File(fotos[i]),
+                                        width: double.infinity,
+                                        height: 200,
+                                        fit: BoxFit.cover),
+                                  ),
+                                );
+                              } catch (e) {
+                                return const SizedBox();
+                              }
+                            },
+                          ),
+                        ),
+                        if (fotos.length > 1) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(fotos.length, (index) {
+                              final isActive = index == currentIndex;
+                              return Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 3),
+                                width: isActive ? 16 : 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? Colors.blue
+                                      : Colors.grey.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(
+                                      isActive ? 12 : 3),
+                                ),
+                              );
+                            }),
+                          ),
+                        ]
+                      ]),
+                    if (fotos.isNotEmpty) const SizedBox(height: 16),
+                    _detailRow('Barcode', item['barcode']),
+                    _detailRow('Kategori', item['kategori']),
+                    _detailRow(
+                        'Harga Jual', _formatRupiah(item['harga_jual'] ?? 0)),
+                    _detailRow(
+                        'Harga Modal', _formatRupiah(item['harga_modal'] ?? 0)),
+                    _detailRow('Stok', item['stok']),
+                    _detailRow('Produsen', item['produsen']),
+                    _detailRow('Supplier', item['supplier']),
+                    _detailRow('No Nota', item['no_nota']),
+                    const Divider(height: 20),
+                    const Text('Deskripsi:',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 4),
+                    Text(item['deskripsi'] ?? '-',
+                        style: const TextStyle(fontSize: 13)),
+                  ]),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tutup'))
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  void _showFullScreenImages(List<dynamic> fotos, int initialPage) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final fullScreenController = PageController(initialPage: initialPage);
+        var currentFullIndex = initialPage;
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return GestureDetector(
+            onTap: () => Navigator.pop(ctx),
+            child: Scaffold(
+              backgroundColor: Colors.black.withOpacity(0.9),
+              body: SafeArea(
+                child: Stack(children: [
+                  PageView.builder(
+                    controller: fullScreenController,
+                    itemCount: fotos.length,
+                    onPageChanged: (index) {
+                      setStateDialog(() {
+                        currentFullIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      try {
+                        return InteractiveViewer(
+                          panEnabled: true,
+                          minScale: 1,
+                          maxScale: 4,
+                          child: Center(
+                            child: Image.file(
+                              File(fotos[index]),
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        return const Center(child: SizedBox());
+                      }
+                    },
+                  ),
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 24,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(fotos.length, (index) {
+                        final isActive = index == currentFullIndex;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: isActive ? 16 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? Colors.blue
+                                : Colors.white.withOpacity(0.4),
+                            borderRadius:
+                                BorderRadius.circular(isActive ? 12 : 3),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          );
+        });
+      },
     );
   }
 
@@ -295,7 +421,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                               child: SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
-                                  children: List.generate(fotoList.length, (index) {
+                                  children:
+                                      List.generate(fotoList.length, (index) {
                                     final path = fotoList[index];
                                     final isSelected =
                                         selectedFotoIndices.contains(index);
@@ -309,9 +436,11 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                         },
                                         onTap: () {
                                           setStateDialog(() {
-                                            if (selectedFotoIndices.contains(index)) {
+                                            if (selectedFotoIndices
+                                                .contains(index)) {
                                               selectedFotoIndices.remove(index);
-                                            } else if (selectedFotoIndices.isNotEmpty) {
+                                            } else if (selectedFotoIndices
+                                                .isNotEmpty) {
                                               selectedFotoIndices.add(index);
                                             }
                                           });
@@ -322,7 +451,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                               width: 75,
                                               height: 75,
                                               decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
                                                   color: isSelected
                                                       ? Colors.blue.shade700
@@ -331,14 +461,16 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                                 ),
                                               ),
                                               child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(6),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                                 child: Image.file(
                                                   File(path),
                                                   width: 75,
                                                   height: 75,
                                                   fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (context, error, stackTrace) => Container(
+                                                  errorBuilder: (context, error,
+                                                          stackTrace) =>
+                                                      Container(
                                                     color: Colors.grey[200],
                                                     child: const Icon(
                                                       Icons.broken_image,
@@ -411,9 +543,9 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                 ? null
                                 : () {
                                     setStateDialog(() {
-                                      final sortedIndices =
-                                          selectedFotoIndices.toList()
-                                            ..sort((a, b) => b.compareTo(a));
+                                      final sortedIndices = selectedFotoIndices
+                                          .toList()
+                                        ..sort((a, b) => b.compareTo(a));
                                       for (final index in sortedIndices) {
                                         fotoList.removeAt(index);
                                       }
@@ -453,8 +585,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       if (formatted != value) {
                         jualCtrl.value = TextEditingValue(
                           text: formatted,
-                          selection: TextSelection.collapsed(
-                              offset: formatted.length),
+                          selection:
+                              TextSelection.collapsed(offset: formatted.length),
                         );
                       }
                     }),
@@ -469,8 +601,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       if (formatted != value) {
                         modalCtrl.value = TextEditingValue(
                           text: formatted,
-                          selection: TextSelection.collapsed(
-                              offset: formatted.length),
+                          selection:
+                              TextSelection.collapsed(offset: formatted.length),
                         );
                       }
                     }),
@@ -611,14 +743,69 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                     children: [
                                       Column(children: [
                                         fotos.isNotEmpty
-                                            ? ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: Image.file(
-                                                    File(fotos[0]),
-                                                    width: 75,
-                                                    height: 75,
-                                                    fit: BoxFit.cover))
+                                            ? Stack(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
+                                                    child: SizedBox(
+                                                      width: 75,
+                                                      height: 75,
+                                                      child: Image.file(
+                                                        File(fotos[0]),
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (fotos.length > 1)
+                                                    Positioned(
+                                                      bottom: 6,
+                                                      left: 0,
+                                                      right: 0,
+                                                      child: Center(
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 4),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black
+                                                                .withOpacity(0.6),
+                                                            borderRadius:
+                                                                BorderRadius.circular(12),
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize.min,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment.center,
+                                                            children: List.generate(
+                                                              fotos.length,
+                                                              (index) => Container(
+                                                                width:
+                                                                    index == 0 ? 6 : 4,
+                                                                height:
+                                                                    index == 0 ? 6 : 4,
+                                                                margin:
+                                                                    const EdgeInsets.symmetric(
+                                                                        horizontal: 2),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: index == 0
+                                                                      ? Colors.white
+                                                                      : Colors.white.withOpacity(
+                                                                          0.4),
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(3),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              )
                                             : Container(
                                                 width: 75,
                                                 height: 75,
@@ -654,8 +841,7 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                             padding: const EdgeInsets.all(8),
                                             constraints: const BoxConstraints(),
                                             onPressed: () => _tampilkanForm(
-                                                barcode:
-                                                    item['barcode'] ?? '',
+                                                barcode: item['barcode'] ?? '',
                                                 dataLama: item),
                                             icon: Icon(Icons.edit,
                                                 color: Colors.orange[800]),
