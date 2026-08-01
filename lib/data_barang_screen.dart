@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'database_helper.dart';
 
 class DataBarangScreen extends StatefulWidget {
@@ -84,6 +86,7 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
       _selectedBarang.clear();
     });
   }
+
   Future<void> _hapusBarang(int id) async {
     await DatabaseHelper.instance.hapusBarang(id);
     if (!mounted) return;
@@ -139,7 +142,6 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
     );
   }
 
-  // INI YANG KEMARIN HILANG BOS - DETAIL LENGKAP 8 KOLOM BALIK LAGI
   void _tampilkanDetailProduk(Map<String, dynamic> item, List<dynamic> fotos) {
     showDialog(
       context: context,
@@ -221,6 +223,20 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
     }
   }
 
+  // FIX PERMANEN - SIMPAN FOTO KE FOLDER AMAN (BUKAN CACHE)
+  Future<String> _simpanPermanen(String tempPath) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final folder = Directory(p.join(appDir.path, 'product_images'));
+    if (!await folder.exists()) {
+      await folder.create(recursive: true);
+    }
+    final fileName = tempPath.split('/').last;
+    final newName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final newPath = p.join(folder.path, newName);
+    await File(tempPath).copy(newPath);
+    return newPath;
+  }
+
   void _tampilkanForm(
       {required String barcode, Map<String, dynamic>? dataLama}) {
     String formatRupiah(String value) {
@@ -295,7 +311,8 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                               child: SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
-                                  children: List.generate(fotoList.length, (index) {
+                                  children:
+                                      List.generate(fotoList.length, (index) {
                                     final path = fotoList[index];
                                     final isSelected =
                                         selectedFotoIndices.contains(index);
@@ -309,9 +326,11 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                         },
                                         onTap: () {
                                           setStateDialog(() {
-                                            if (selectedFotoIndices.contains(index)) {
+                                            if (selectedFotoIndices
+                                                .contains(index)) {
                                               selectedFotoIndices.remove(index);
-                                            } else if (selectedFotoIndices.isNotEmpty) {
+                                            } else if (selectedFotoIndices
+                                                .isNotEmpty) {
                                               selectedFotoIndices.add(index);
                                             }
                                           });
@@ -322,42 +341,43 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                               width: 75,
                                               height: 75,
                                               decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                                 border: Border.all(
-                                                  color: isSelected
-                                                      ? Colors.blue.shade700
-                                                      : Colors.grey.shade300,
-                                                  width: isSelected ? 3 : 1,
-                                                ),
+                                                    color: isSelected
+                                                        ? Colors.blue.shade700
+                                                        : Colors.grey.shade300,
+                                                    width: isSelected ? 3 : 1),
                                               ),
                                               child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(6),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                                 child: Image.file(
                                                   File(path),
                                                   width: 75,
                                                   height: 75,
                                                   fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (context, error, stackTrace) => Container(
-                                                    color: Colors.grey[200],
-                                                    child: const Icon(
-                                                      Icons.broken_image,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
+                                                  errorBuilder: (context, error,
+                                                          stackTrace) =>
+                                                      Container(
+                                                          color:
+                                                              Colors.grey[200],
+                                                          child: const Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              color:
+                                                                  Colors.grey)),
                                                 ),
                                               ),
                                             ),
                                             if (isSelected)
                                               const Positioned(
-                                                top: 4,
-                                                right: 4,
-                                                child: Icon(
-                                                  Icons.check_circle,
-                                                  size: 18,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
+                                                  top: 4,
+                                                  right: 4,
+                                                  child: Icon(
+                                                      Icons.check_circle,
+                                                      size: 18,
+                                                      color: Colors.red)),
                                           ],
                                         ),
                                       ),
@@ -379,54 +399,52 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                               final picked = await ImagePicker()
                                   .pickImage(source: ImageSource.camera);
                               if (picked != null) {
+                                final permanent =
+                                    await _simpanPermanen(picked.path);
                                 setStateDialog(() {
-                                  fotoList.add(picked.path);
+                                  fotoList.add(permanent);
                                 });
                               }
                             },
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 24,
-                              color: Colors.blue,
-                            ),
+                            child: const Icon(Icons.camera_alt,
+                                size: 24, color: Colors.blue),
                           ),
                           GestureDetector(
                             onTap: () async {
                               final picked = await ImagePicker()
                                   .pickMultiImage(imageQuality: 70);
                               if (picked.isNotEmpty) {
+                                List<String> permanents = [];
+                                for (var e in picked) {
+                                  permanents.add(await _simpanPermanen(e.path));
+                                }
                                 setStateDialog(() {
-                                  fotoList.addAll(picked.map((e) => e.path));
+                                  fotoList.addAll(permanents);
                                 });
                               }
                             },
-                            child: const Icon(
-                              Icons.photo_library,
-                              size: 24,
-                              color: Colors.green,
-                            ),
+                            child: const Icon(Icons.photo_library,
+                                size: 24, color: Colors.green),
                           ),
                           GestureDetector(
                             onTap: selectedFotoIndices.isEmpty
                                 ? null
                                 : () {
                                     setStateDialog(() {
-                                      final sortedIndices =
-                                          selectedFotoIndices.toList()
-                                            ..sort((a, b) => b.compareTo(a));
+                                      final sortedIndices = selectedFotoIndices
+                                          .toList()
+                                        ..sort((a, b) => b.compareTo(a));
                                       for (final index in sortedIndices) {
                                         fotoList.removeAt(index);
                                       }
                                       selectedFotoIndices.clear();
                                     });
                                   },
-                            child: Icon(
-                              Icons.delete_forever,
-                              size: 24,
-                              color: selectedFotoIndices.isEmpty
-                                  ? Colors.red.shade200
-                                  : Colors.red[900],
-                            ),
+                            child: Icon(Icons.delete_forever,
+                                size: 24,
+                                color: selectedFotoIndices.isEmpty
+                                    ? Colors.red.shade200
+                                    : Colors.red[900]),
                           ),
                         ],
                       ),
@@ -452,10 +470,9 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       final formatted = formatRupiah(value);
                       if (formatted != value) {
                         jualCtrl.value = TextEditingValue(
-                          text: formatted,
-                          selection: TextSelection.collapsed(
-                              offset: formatted.length),
-                        );
+                            text: formatted,
+                            selection: TextSelection.collapsed(
+                                offset: formatted.length));
                       }
                     }),
                 const SizedBox(height: 8),
@@ -468,10 +485,9 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                       final formatted = formatRupiah(value);
                       if (formatted != value) {
                         modalCtrl.value = TextEditingValue(
-                          text: formatted,
-                          selection: TextSelection.collapsed(
-                              offset: formatted.length),
-                        );
+                            text: formatted,
+                            selection: TextSelection.collapsed(
+                                offset: formatted.length));
                       }
                     }),
                 const SizedBox(height: 8),
@@ -651,16 +667,16 @@ class _DataBarangScreenState extends State<DataBarangScreen> {
                                       if (widget.role == 'BOS')
                                         Column(children: [
                                           IconButton(
-                                            padding: const EdgeInsets.all(8),
-                                            constraints: const BoxConstraints(),
-                                            onPressed: () => _tampilkanForm(
-                                                barcode:
-                                                    item['barcode'] ?? '',
-                                                dataLama: item),
-                                            icon: Icon(Icons.edit,
-                                                color: Colors.orange[800]),
-                                            color: Colors.orange[50],
-                                          ),
+                                              padding: const EdgeInsets.all(8),
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              onPressed: () => _tampilkanForm(
+                                                  barcode:
+                                                      item['barcode'] ?? '',
+                                                  dataLama: item),
+                                              icon: Icon(Icons.edit,
+                                                  color: Colors.orange[800]),
+                                              color: Colors.orange[50]),
                                           const SizedBox(height: 8),
                                           if (!isSelected)
                                             InkWell(
